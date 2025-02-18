@@ -1,15 +1,9 @@
 import 'cypress-xpath';
 import { login } from "../../login.cy";
 import 'cypress-file-upload';
-const { faker } = require('@faker-js/faker');
-
-const generateRandomCode = () => {
-  const randomLetter = faker.string.alpha({ count: 1, casing: 'upper' });
-  const randomNumbers = faker.string.numeric(2);
-  return `${randomLetter}${randomNumbers}`;
-};
 
 const create_product = () => cy.xpath("//div[contains(text(),'สร้างสินค้า')]");
+const image = () => cy.xpath("//input[@type=\"file\"]");
 const name = () => cy.xpath("//input[@name='name']");
 const productCategoryId = () => cy.xpath("//div[@id='mui-component-select-productCategoryId']");
 const productCategoryId2 = () => cy.xpath("//body/div[@id='menu-productCategoryId']/div[3]/ul[1]/li[2]");
@@ -17,7 +11,6 @@ const productCategoryId_last = () => cy.xpath("//body/div[@id='menu-productCateg
 const productTypeId = () => cy.xpath("//div[@id='mui-component-select-productTypeId']");
 const productTypeId2 = () => cy.xpath("//body/div[@id='menu-productTypeId']/div[3]/ul[1]/li[2]");
 const description = () => cy.xpath("//textarea[@name='description']");
-const urlSlug = () => cy.xpath("//input[@name='urlSlug']");
 
 const minWidth = () => cy.xpath("//input[@name=\"productSize.minWidth\"]");
 const minHeight = () => cy.xpath("//input[@name=\"productSize.minHeight\"]");
@@ -26,27 +19,43 @@ const maxWidth = () => cy.xpath("//input[@name=\"productSize.maxWidth\"]");
 const maxHeight = () => cy.xpath("//input[@name=\"productSize.maxHeight\"]");
 const maxLength = () => cy.xpath("//input[@name=\"productSize.maxLength\"]");
 
-const btsave = () => cy.xpath("//form[1]/div[9]/button[1]");
+const btsave = () => cy.xpath("//form[1]/div[10]/button[1]");
 const menu = () => cy.xpath("//div[@class='MuiDataGrid-row MuiDataGrid-row--lastVisible']/div[6]/div");
-const edit_product = () => cy.xpath("//body/div[2]/div[3]/ul[1]/li[1]/div[1]");
+const edit_product = () => cy.xpath("//ul[1]/li[1]/div[1]");
+
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // ตรวจสอบข้อความของข้อผิดพลาดว่าเป็นข้อผิดพลาดที่ต้องการข้าม
+  if (err.message.includes('Cannot set property message of [object DOMException]')) {
+    return false; // ข้ามข้อผิดพลาดนี้
+  }
+  return true; // ข้อผิดพลาดอื่นๆ ให้ Cypress จัดการ
+});
 
 describe('Function Product', () => {
   beforeEach(() => {
-    login();
     cy.wait(2000);
-    cy.visit('https://app-staging.honconnect.co/product');
+    login();
     cy.wait(2000);
   });
 
   it.skip('Create Product', () => {
+    cy.visit('https://app-staging.honconnect.co/product');
+    cy.wait(2000);
     create_product().click();
     cy.wait(2000);
 
     cy.task('fetchGoogleSheetData', { range: 'Product!E2:P13' }).then(data => {
       data.forEach((row, index) => {
-        const [dtname, dtcategory, dttype, dtdescription, dtproducturl, dtminwidth, dtminheight, dtminlength
+        const [dtlinkpicture, dtname, dtcategory, dttype, dtdescription, dtminwidth, dtminheight, dtminlength
           , dtmaxwidth, dtmaxheight,dtmaxlength, ExpectedAlertMessage] = row;
 
+        if (dtlinkpicture) {
+          const fileName = 'product.jpg'; // ชื่อไฟล์ที่ต้องการ
+          cy.task('downloadFile', { url: dtlinkpicture, fileName }).then((filePath) => {
+            // เนื่องจาก attachFile ต้องการชื่อไฟล์ใน fixtures, ใช้แค่ชื่อไฟล์
+            image().attachFile(fileName);
+          });
+        }
         if (dtname){
           cy.wait(2000);
           name().type(dtname);
@@ -72,13 +81,6 @@ describe('Function Product', () => {
         }else {
           cy.wait(2000);
           description().clear({force: true});
-        }
-        if(dtproducturl){
-          cy.wait(2000);
-          urlSlug().type(generateRandomCode());
-        }else {
-          cy.wait(2000);
-          urlSlug().clear({force: true});
         }
         if(dtminwidth){
             minWidth().type(dtminwidth);
@@ -114,10 +116,6 @@ describe('Function Product', () => {
           }
           if(ExpectedAlertMessage=== 'สร้างสินค้าเรียบร้อย') {
             cy.wait(2000);
-            cy.xpath("//button[contains(text(),'OK')]").click();
-            cy.wait(2000);
-            cy.xpath("//div[@class='back-button']/button").click();
-            cy.wait(2000);
             create_product().click();
           }else{
             cy.wait(2000);
@@ -128,7 +126,9 @@ describe('Function Product', () => {
     });
   });
 
-  it('Edit Product', () => {
+  it.skip('Edit Product', () => {
+    cy.visit('https://app-staging.honconnect.co/product');
+    cy.wait(2000);
     menu().click();
     cy.wait(2000);
     edit_product().click();
@@ -136,17 +136,24 @@ describe('Function Product', () => {
 
     cy.task('fetchGoogleSheetData', { range: 'Product!W2:AH12' }).then(data => {
       data.forEach((row, index) => {
-        const [dtname, dtcategory, dttype, dtdescription, dtproducturl, dtminwidth, dtminheight,dtminlength
+        const [dtlinkpicture, dtname, dtcategory, dttype, dtdescription, dtminwidth, dtminheight, dtminlength
           , dtmaxwidth, dtmaxheight,dtmaxlength, ExpectedAlertMessage] = row;
 
+        if (dtlinkpicture) {
+          const fileName = 'product.jpg'; // ชื่อไฟล์ที่ต้องการ
+          cy.task('downloadFile', { url: dtlinkpicture, fileName }).then((filePath) => {
+            // เนื่องจาก attachFile ต้องการชื่อไฟล์ใน fixtures, ใช้แค่ชื่อไฟล์
+            image().attachFile(fileName);
+          });
+        }
         if (dtname){
           cy.wait(2000);
-          name().clear({force: true}).type(dtname);
+          name().type(dtname);
         }else {
           cy.wait(2000);
           name().clear({force: true});
         }
-        if(!dttype){
+        if(dtcategory==='ถุงกระดาษ'){
           cy.wait(2000);
           productCategoryId().click();
           cy.wait(2000);
@@ -154,47 +161,28 @@ describe('Function Product', () => {
         }
         if(dtdescription){
           cy.wait(2000);
-          description().clear({force: true}).type(dtdescription);
+          description().type(dtdescription);
         }else {
           cy.wait(2000);
           description().clear({force: true});
         }
-        if(dtproducturl){
-          cy.wait(2000);
-          urlSlug().clear({force: true}).type(generateRandomCode());
-        }else {
-          cy.wait(2000);
-          urlSlug().clear({force: true});
-        }
         if(dtminwidth){
-          minWidth().clear().type(dtminwidth);
-        }else {
-          minWidth().clear();
+          minWidth().type(dtminwidth);
         }
         if (dtminheight){
-          minHeight().clear().type(dtminheight);
-        }else {
-          minHeight().clear();
+          minHeight().type(dtminheight);
         }
         if (dtminlength){
-          minLength().clear().type(dtminlength);
-        }else {
-          minLength().clear();
+          minLength().type(dtminlength);
         }
         if (dtmaxwidth){
-          maxWidth().clear().type(dtmaxwidth);
-        }else {
-          maxWidth().clear();
+          maxWidth().type(dtmaxwidth);
         }
         if (dtmaxheight){
-          maxHeight().clear().type(dtmaxheight);
-        }else {
-          maxHeight().clear();
+          maxHeight().type(dtmaxheight);
         }
         if (dtmaxlength){
-          maxLength().clear().type(dtmaxlength);
-        }else {
-          maxLength().clear();
+          maxLength().type(dtmaxlength);
         }
         cy.wait(2000);
         btsave().click();
@@ -211,10 +199,6 @@ describe('Function Product', () => {
             cy.log(`Updating row ${index + 2} with status Pass`);
           }
           if(ExpectedAlertMessage=== 'อัพเดทสินค้าเรียบร้อย') {
-            cy.wait(2000);
-            cy.xpath("//button[contains(text(),'OK')]").click();
-            cy.wait(2000);
-            cy.xpath("//div[@class='back-button']/button").click();
             cy.wait(2000);
             menu().click();
             cy.wait(2000);

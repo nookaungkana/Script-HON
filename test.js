@@ -72,7 +72,7 @@ async function downloadFile({ url, fileName }) {
     if (response.status !== 200) {
         throw new Error(`Failed to download file from ${url}`);
     }
-    const filePath = join(__dirname, '..', 'Google Sheet', 'cypress', 'fixtures', fileName);
+    const filePath = join(__dirname, '..', 'Script-HON', 'cypress', 'fixtures', fileName);
     console.log('Saving file to:', filePath); // แสดง path ที่กำลังจะบันทึก
     fs.writeFileSync(filePath, response.data);
     return filePath; // คืนค่า path ของไฟล์ที่ดาวน์โหลด
