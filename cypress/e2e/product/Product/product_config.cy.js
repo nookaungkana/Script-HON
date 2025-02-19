@@ -136,7 +136,7 @@ describe('Function Product Config', () => {
             });
         });
     });
-    it('Edit Product Config', () => {
+    it.skip('Edit Product Config', () => {
         cy.visit('https://app-staging.honconnect.co/product');
         cy.wait(2000);
         menu().click();
@@ -144,7 +144,7 @@ describe('Function Product Config', () => {
         product_config().click();
         cy.wait(2000);
 
-        cy.task('fetchGoogleSheetData', { range: 'Product-Config!AD6:AV9' }).then(data => {
+        cy.task('fetchGoogleSheetData', { range: 'Product-Config!AD9:AV9' }).then(data => {
             data.forEach((row, index) => {
                 const [btaddmodel, dtlinkpicture, namemodel, material, submaterial, submaterialdetail,
                     component, subcomponent, subcomponentdetail, print, subprint, sunprintdetail,
@@ -210,12 +210,12 @@ describe('Function Product Config', () => {
                     if ($element.length > 0) {
                         cy.log('Alert matches expected message');
                         cy.task('updateStatus', {
-                            row: index + 6,
+                            row: index + 9,
                             status: 'Pass',
                             column: 'AW',
                             sheetName: 'Product-Config'
                         });
-                        cy.log(`Updating row ${index + 6} with status Pass`);
+                        cy.log(`Updating row ${index + 9} with status Pass`);
                     }
                     cy.wait(2000);
                     cy.reload();

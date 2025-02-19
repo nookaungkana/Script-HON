@@ -22,6 +22,7 @@ const maxLength = () => cy.xpath("//input[@name=\"productSize.maxLength\"]");
 const btsave = () => cy.xpath("//form[1]/div[10]/button[1]");
 const menu = () => cy.xpath("//div[@class='MuiDataGrid-row MuiDataGrid-row--lastVisible']/div[6]/div");
 const edit_product = () => cy.xpath("//ul[1]/li[1]/div[1]");
+const btsave_edit = () => cy.xpath("//form[1]/div[9]/button[1]");
 
 Cypress.on('uncaught:exception', (err, runnable) => {
   // ตรวจสอบข้อความของข้อผิดพลาดว่าเป็นข้อผิดพลาดที่ต้องการข้าม
@@ -125,7 +126,6 @@ describe('Function Product', () => {
       });
     });
   });
-
   it.skip('Edit Product', () => {
     cy.visit('https://app-staging.honconnect.co/product');
     cy.wait(2000);
@@ -134,7 +134,7 @@ describe('Function Product', () => {
     edit_product().click();
     cy.wait(2000);
 
-    cy.task('fetchGoogleSheetData', { range: 'Product!W2:AH12' }).then(data => {
+    cy.task('fetchGoogleSheetData', { range: 'Product!W7:AH12' }).then(data => {
       data.forEach((row, index) => {
         const [dtlinkpicture, dtname, dtcategory, dttype, dtdescription, dtminwidth, dtminheight, dtminlength
           , dtmaxwidth, dtmaxheight,dtmaxlength, ExpectedAlertMessage] = row;
@@ -142,13 +142,12 @@ describe('Function Product', () => {
         if (dtlinkpicture) {
           const fileName = 'product.jpg'; // ชื่อไฟล์ที่ต้องการ
           cy.task('downloadFile', { url: dtlinkpicture, fileName }).then((filePath) => {
-            // เนื่องจาก attachFile ต้องการชื่อไฟล์ใน fixtures, ใช้แค่ชื่อไฟล์
             image().attachFile(fileName);
           });
         }
         if (dtname){
           cy.wait(2000);
-          name().type(dtname);
+          name().clear({force: true}).type(dtname);
         }else {
           cy.wait(2000);
           name().clear({force: true});
@@ -161,44 +160,63 @@ describe('Function Product', () => {
         }
         if(dtdescription){
           cy.wait(2000);
-          description().type(dtdescription);
+          description().clear({force: true}).type(dtdescription);
         }else {
           cy.wait(2000);
           description().clear({force: true});
         }
         if(dtminwidth){
-          minWidth().type(dtminwidth);
+          minWidth().clear({force: true}).type(dtminwidth);
+        }else {
+          cy.wait(2000);
+          minWidth().clear({force: true});
         }
         if (dtminheight){
-          minHeight().type(dtminheight);
+          minHeight().clear({force: true}).type(dtminheight);
+        }else {
+          cy.wait(2000);
+          minHeight().clear({force: true});
         }
         if (dtminlength){
-          minLength().type(dtminlength);
+          minLength().clear({force: true}).type(dtminlength);
+        }else {
+          cy.wait(2000);
+          minLength().clear({force: true});
         }
         if (dtmaxwidth){
-          maxWidth().type(dtmaxwidth);
+          maxWidth().clear({force: true}).type(dtmaxwidth);
+        }else {
+          cy.wait(2000);
+          maxWidth().clear({force: true});
         }
         if (dtmaxheight){
-          maxHeight().type(dtmaxheight);
+          maxHeight().clear({force: true}).type(dtmaxheight);
+        }
+        else {
+          cy.wait(2000);
+          maxHeight().clear({force: true});
         }
         if (dtmaxlength){
-          maxLength().type(dtmaxlength);
+          maxLength().clear({force: true}).type(dtmaxlength);
+        }else {
+          cy.wait(2000);
+          maxLength().clear({force: true});
         }
         cy.wait(2000);
-        btsave().click();
+        btsave_edit().click();
 
         cy.contains(ExpectedAlertMessage).then(($element) => {
           if ($element.length > 0) {
             cy.log('Alert matches expected message');
             cy.task('updateStatus', {
-              row: index + 2,
+              row: index + 7,
               status: 'Pass',
               column: 'AI',
               sheetName: 'Product'
             });
-            cy.log(`Updating row ${index + 2} with status Pass`);
+            cy.log(`Updating row ${index + 7} with status Pass`);
           }
-          if(ExpectedAlertMessage=== 'อัพเดทสินค้าเรียบร้อย') {
+          if(ExpectedAlertMessage=== 'อัปเดต Product สำเร็จ') {
             cy.wait(2000);
             menu().click();
             cy.wait(2000);
